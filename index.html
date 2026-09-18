@@ -13,7 +13,7 @@
             color: #333;
         }
         .container {
-            max-width: 750px;
+            max-width: 800px;
             margin: 0 auto;
             background: #fff;
             padding: 25px;
@@ -32,16 +32,36 @@
             text-align: left;
             border-bottom: 1px solid #ddd;
             font-size: 14px;
+            vertical-align: top;
         }
         th { background-color: #f8f9fa; }
         .badge {
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 4px;
             font-weight: bold;
-            font-size: 12px;
+            font-size: 11px;
         }
         .empty { background-color: #ffe6e6; color: #cc0000; }
         .contains { background-color: #e6ffe6; color: #006600; }
+        .file-list {
+            margin: 5px 0 0 0;
+            padding-left: 20px;
+            font-size: 13px;
+            color: #555;
+        }
+        .file-list li {
+            margin-bottom: 3px;
+        }
+        .file-tag {
+            background: #eef2f7;
+            color: #333;
+            padding: 1px 5px;
+            border-radius: 3px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-right: 6px;
+            text-transform: uppercase;
+        }
         a.btn {
             background-color: #0066cc;
             color: white;
@@ -59,28 +79,27 @@
 
 <div class="container">
     <h2>Google Drive Folders Dashboard</h2>
-    <p>Live status fetched directly from Google Drive:</p>
+    <p>Live status and file breakdown fetched directly from Google Drive:</p>
     
     <table>
         <thead>
             <tr>
-                <th>Folder Name</th>
-                <th>Item Count</th>
+                <th>Folder Name & Files</th>
+                <th>Count</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
         </thead>
         <tbody id="folderTableBody">
             <tr>
-                <td colspan="4" class="loading">Loading data from Google Drive...</td>
+                <td colspan="4" class="loading">Loading folder breakdown from Google Drive...</td>
             </tr>
         </tbody>
     </table>
 </div>
 
 <script>
-    // Your deployed Google Apps Script Web App URL
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbwyakJ7QES3SwX-ht4M7JErNbslfpu8lalAVTzuJlPvzS4ACiBkYFRoHY18h9IcRGmWjg/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbxVVDlKMLZgTRYQdemEczfPt_ftszsRTKguBDeqAZyNeWxdL4XR6mUTLadUMS_p3RuZOw/exec";
 
     async function loadFolderData() {
         const tbody = document.getElementById('folderTableBody');
@@ -88,16 +107,30 @@
             const response = await fetch(GAS_URL);
             const data = await response.json();
             
-            tbody.innerHTML = ""; // Clear loading message
+            tbody.innerHTML = ""; 
 
             data.forEach(folder => {
                 const row = document.createElement('tr');
-                
                 const badgeClass = folder.count === 0 ? 'empty' : 'contains';
 
+                // Build sub-list of files if any exist
+                let filesHtml = '';
+                if (folder.files && folder.files.length > 0) {
+                    filesHtml = '<ul class="file-list">';
+                    folder.files.forEach(f => {
+                        filesHtml += `<li><span class="file-tag">${f.type}</span>${f.name}</li>`;
+                    });
+                    filesHtml += '</ul>';
+                } else {
+                    filesHtml = '<div style="color: #999; font-size: 12px; margin-top: 4px; font-style: italic;">No files found</div>';
+                }
+
                 row.innerHTML = `
-                    <td><strong>${folder.name}</strong></td>
-                    <td>${folder.count}</td>
+                    <td>
+                        <strong>${folder.name}</strong>
+                        ${filesHtml}
+                    </td>
+                    <td><strong>${folder.count}</strong></td>
                     <td><span class="badge ${badgeClass}">${folder.status}</span></td>
                     <td><a class="btn" href="${folder.url}" target="_blank">Open</a></td>
                 `;
@@ -109,7 +142,6 @@
         }
     }
 
-    // Automatically load data when the GitHub Pages site opens/refreshes
     loadFolderData();
 </script>
 
